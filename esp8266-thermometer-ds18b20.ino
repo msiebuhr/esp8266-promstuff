@@ -20,8 +20,6 @@ OneWire oneWire(D5);
 DallasTemperature sensors(&oneWire);
 int deviceCount;
 
-int ledPin = 2; // GPIO2
-
 WiFiServer server(80);
 int requests = 0;
 int value = LOW;
@@ -36,8 +34,8 @@ void setup() {
   Serial.println(hostString);
   WiFi.hostname(hostString);
 
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW);
+  pinMode(BUILTIN_LED, OUTPUT);
+  digitalWrite(BUILTIN_LED, LOW);
 
   // Connect to WiFi network
   Serial.println();
@@ -111,7 +109,7 @@ void loop() {
       value = LOW;
     }
   }
-  digitalWrite(ledPin, value);
+  digitalWrite(BUILTIN_LED, value);
 
   // TODO: Match if the client wants metrics and reply with a bunch of those...
   if (request.indexOf("/metrics") != -1) {
@@ -149,8 +147,8 @@ void loop() {
     return;
   }
 
-  // Set ledPin according to the request
-  //digitalWrite(ledPin, value);
+  // Set BUILTIN_LED according to the request
+  //digitalWrite(BUILTIN_LED, value);
 
 
   // Return the response
