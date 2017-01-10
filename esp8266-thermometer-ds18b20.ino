@@ -25,7 +25,6 @@ int deviceCount;
 
 WiFiServer server(80);
 int requests = 0;
-int value = LOW;
 char hostString[16] = {0};
 
 void setup() {
@@ -88,26 +87,12 @@ void loop() {
   }
 
   Serial.println("Client request");
+  digitalWrite(BUILTIN_LED, LOW);
 
   // Read the first line of the request
   String request = client.readStringUntil('\r');
   Serial.println(request);
   client.flush();
-
-  // Match the request
-
-  if (request.indexOf("/LED=ON") != -1) {
-    value = LOW;
-  } else if (request.indexOf("/LED=OFF") != -1) {
-    value = HIGH;
-  } else {
-    if (value == LOW) {
-      value = HIGH;
-    } else {
-      value = LOW;
-    }
-  }
-  digitalWrite(BUILTIN_LED, value);
 
   // TODO: Match if the client wants metrics and reply with a bunch of those...
   if (request.indexOf("/metrics") != -1) {
@@ -142,12 +127,10 @@ void loop() {
     client.print("uptime_ms{} ");
     client.print(millis());
     client.print("\n\n");
+
+    digitalWrite(BUILTIN_LED, HIGH);
     return;
   }
-
-  // Set BUILTIN_LED according to the request
-  //digitalWrite(BUILTIN_LED, value);
-
 
   // Return the response
   client.println("HTTP/1.1 200 OK");
@@ -155,17 +138,6 @@ void loop() {
   client.println(""); //  do not forget this one
   client.println("<!DOCTYPE HTML>");
   client.println("<html>");
-
-  client.print("Led pin is now: ");
-
-  if (value == LOW) {
-    client.print("On");
-  } else {
-    client.print("Off");
-  }
-  client.println("<br><br>");
-  client.println("Click <a href=\"/LED=ON\">here</a> turn the LED on pin 2 ON<br>");
-  client.println("Click <a href=\"/LED=OFF\">here</a> turn the LED on pin 2 OFF<br>");
 
   client.println("<br>Requests ");
   client.print("DATA: ");
@@ -181,6 +153,7 @@ void loop() {
 
   client.println("</html>");
 
+  digitalWrite(BUILTIN_LED, HIGH);
   Serial.println("Client disonnected");
   Serial.println("");
 
