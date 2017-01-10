@@ -27,6 +27,9 @@ WiFiServer server(80);
 int requests = 0;
 char hostString[16] = {0};
 
+DeviceAddress address;
+char buf[16];
+
 void setup() {
   Serial.begin(115200);
   delay(10);
@@ -74,6 +77,20 @@ void setup() {
   Serial.printf("DS18B20's initialized, %d found\n", deviceCount);
 }
 
+// function to print a device address
+void sprintAddress(char buf[], DeviceAddress deviceAddress)
+{
+  for (uint8_t i = 0; i < 8; i++)
+  {
+    // zero pad the address if necessary
+    if (deviceAddress[i] < 16) {
+      sprintf(buf + sizeof(char) * i * 2, "0%x", deviceAddress[i]);
+    } else {
+      sprintf(buf + sizeof(char) * i * 2, "%x", deviceAddress[i]);
+    }
+  }
+}
+
 void loop() {
   // Check if a client has connected
   WiFiClient client = server.available();
@@ -106,8 +123,11 @@ void loop() {
     client.print("# HELP temperature_c Calculated temperature in centigrade\n");
     client.print("# TYPE temperature_c gauge\n");
 
+
     for (int i = 0; i < deviceCount; i += 1) {
-      client.printf("temperature_c{sensor=\"%d\"} ", i);
+      sensors.getAddress(address, i);
+      sprintAddress(buf, address);
+      client.printf("temperature_c{sensor=\"%s\"} ", buf);
       client.print(sensors.getTempCByIndex(i));
       client.print("\n");
     }
