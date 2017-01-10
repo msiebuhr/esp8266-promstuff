@@ -42,9 +42,7 @@ void setup() {
 
   // Connect to WiFi network
   Serial.println();
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(SECRET_WIFI_SSID);
+  Serial.printf("Connecting to %s ", SECRET_WIFI_SSID);
 
   WiFi.mode(WIFI_STA); // STA = STand-Alone? Doesn't start an AP on the side, which is nice.
   WiFi.begin(SECRET_WIFI_SSID, SECRET_WIFI_PASSWORD);
@@ -53,32 +51,28 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
+  Serial.println(" connected");
 
   // Start the server
   server.begin();
-  Serial.println("Server started");
 
   // Print the IP address
-  Serial.print("Use this URL to connect: ");
+  Serial.print("Server started on: ");
   Serial.print("http://");
   Serial.print(WiFi.localIP());
   Serial.println("/");
 
-
+  // Start mDNS
   if (!MDNS.begin(hostString)) {
     Serial.println("Error setting up MDNS responder!");
   }
+  MDNS.addService("prometheus-http", "tcp", 80); // Announce esp tcp service on port 80
   Serial.println("mDNS responder started");
-  MDNS.addService("prometheus-http", "tcp", 80); // Announce esp tcp service on port 8080
 
   // Start thermometers
   sensors.begin();
-  Serial.print("Found ");
   deviceCount = sensors.getDeviceCount();
-  Serial.print(deviceCount, DEC);
-  Serial.println(" devices.");
+  Serial.printf("DS18B20's initialized, %d found\n", deviceCount);
 }
 
 void loop() {
@@ -89,10 +83,11 @@ void loop() {
   }
 
   // Wait until the client sends some data
-  Serial.println("new client");
   while (!client.available()) {
     delay(1);
   }
+
+  Serial.println("Client request");
 
   // Read the first line of the request
   String request = client.readStringUntil('\r');
