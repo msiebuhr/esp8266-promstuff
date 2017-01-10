@@ -127,31 +127,26 @@ void loop() {
     client.print("uptime_ms{} ");
     client.print(millis());
     client.print("\n\n");
+  } else {
+    // Return the response
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-Type: text/html");
+    client.println(""); //  do not forget this one
+    client.println("<!DOCTYPE HTML>");
+    client.println("<html>");
 
-    digitalWrite(BUILTIN_LED, HIGH);
-    return;
+    client.println("<br>Requests ");
+    client.print("DATA: ");
+    client.print(requests++);
+    client.println(" requests");
+
+    client.println("<br>Uptime ");
+    client.print("DATA: ");
+    client.print(millis());
+    client.println(" ms");
+
+    client.println("</html>");
   }
-
-  // Return the response
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println(""); //  do not forget this one
-  client.println("<!DOCTYPE HTML>");
-  client.println("<html>");
-
-  client.println("<br>Requests ");
-  client.print("DATA: ");
-  client.print(requests++);
-  client.println(" requests");
-
-
-  client.println("<br>Uptime ");
-  client.print("DATA: ");
-  client.print(millis());
-  client.println(" ms");
-
-
-  client.println("</html>");
 
   digitalWrite(BUILTIN_LED, HIGH);
   Serial.println("Client disonnected");
