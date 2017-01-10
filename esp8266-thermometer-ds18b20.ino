@@ -4,6 +4,9 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+// Import board-specifics
+#include "LoLin-NodeMCU-board.h"
+
 /* Ideas
     - https://github.com/esp8266/Arduino/blob/master/doc/libraries.md gives some things
     - Tag thermometers by their address, so we don't rely on implicit orderings...
