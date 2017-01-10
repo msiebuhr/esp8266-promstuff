@@ -101,7 +101,7 @@ void loop() {
     client.println(""); //  do not forget this one
 
     sensors.requestTemperatures(); // Send the command to get temperatures
-    delay(100);
+    delay(1);
 
     client.print("# HELP temperature_c Calculated temperature in centigrade\n");
     client.print("# TYPE temperature_c gauge\n");
