@@ -7,14 +7,8 @@
 // Import board-specifics
 #include "LoLin-NodeMCU-board.h"
 
-/* Ideas
-    - https://github.com/esp8266/Arduino/blob/master/doc/libraries.md gives some things
-    - Tag thermometers by their address, so we don't rely on implicit orderings...
-    - Write (quick) Prometheus client
-*/
-
+// Things we don't want the outside world to see...
 #include "secrets.h"
-
 
 // Setup a oneWire instance to communicate with any OneWire devices
 // (not just Maxim/Dallas temperature ICs)
