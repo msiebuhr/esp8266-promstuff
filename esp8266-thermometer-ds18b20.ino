@@ -129,7 +129,6 @@ void loop() {
     client.print("# HELP temperature_c Calculated temperature in centigrade\n");
     client.print("# TYPE temperature_c gauge\n");
 
-
     for (int i = 0; i < deviceCount; i += 1) {
       sprintAddress(buf, deviceAddressList[i]);
       client.printf("temperature_c{sensor=\"%s\"} ", buf);
@@ -143,9 +142,7 @@ void loop() {
 
     client.print("# HELP http_requests_total Number of requests processed\n");
     client.print("# TYPE http_requests_total counter\n");
-    client.print("http_requests_total{} ");
-    client.print(requests++);
-    client.print("\n\n");
+    client.printf("http_requests_total{} %d\n\n", requests++);
 
     client.print("# HELP heap_free_b Uptime in milliseconds\n");
     client.print("# TYPE heap_free_b gauge\n");
@@ -153,9 +150,7 @@ void loop() {
 
     client.print("# HELP uptime_ms Uptime in milliseconds\n");
     client.print("# TYPE uptime_ms gauge\n");
-    client.print("uptime_ms{} ");
-    client.print(millis());
-    client.print("\n\n");
+    client.printf("uptime_ms{} %d\n\n", millis());
   } else {
     // Return the response
     client.println("HTTP/1.1 200 OK");
