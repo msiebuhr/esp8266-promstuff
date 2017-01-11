@@ -111,6 +111,7 @@ void loop() {
 
   Serial.println("Client request");
   digitalWrite(BUILTIN_LED, LOW);
+  requests = requests + 1;
 
   // Read the first line of the request
   String request = client.readStringUntil('\r');
@@ -142,7 +143,7 @@ void loop() {
 
     client.print("# HELP http_requests_total Number of requests processed\n");
     client.print("# TYPE http_requests_total counter\n");
-    client.printf("http_requests_total{} %d\n\n", requests++);
+    client.printf("http_requests_total{} %d\n\n", requests);
 
     client.print("# HELP heap_free_b Uptime in milliseconds\n");
     client.print("# TYPE heap_free_b gauge\n");
@@ -157,19 +158,7 @@ void loop() {
     client.println("Content-Type: text/html");
     client.println(""); //  do not forget this one
     client.println("<!DOCTYPE HTML>");
-    client.println("<html>");
-
-    client.println("<br>Requests ");
-    client.print("DATA: ");
-    client.print(requests++);
-    client.println(" requests");
-
-    client.println("<br>Uptime ");
-    client.print("DATA: ");
-    client.print(millis());
-    client.println(" ms");
-
-    client.println("</html>");
+    client.println("<html><a href=\"/metrics\">/metrics</a></html>");
   }
 
   digitalWrite(BUILTIN_LED, HIGH);
