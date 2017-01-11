@@ -147,6 +147,10 @@ void loop() {
     client.print(requests++);
     client.print("\n\n");
 
+    client.print("# HELP heap_free_b Uptime in milliseconds\n");
+    client.print("# TYPE heap_free_b gauge\n");
+    client.printf("heap_free_b{} %d\n\n", ESP.getFreeHeap());
+
     client.print("# HELP uptime_ms Uptime in milliseconds\n");
     client.print("# TYPE uptime_ms gauge\n");
     client.print("uptime_ms{} ");
