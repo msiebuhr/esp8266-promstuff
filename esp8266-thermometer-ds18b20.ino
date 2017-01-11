@@ -29,6 +29,7 @@ char hostString[16] = {0};
 
 DeviceAddress address;
 char buf[16];
+DeviceAddress* deviceAddressList;
 
 void setup() {
   Serial.begin(115200);
@@ -75,6 +76,11 @@ void setup() {
   sensors.begin();
   deviceCount = sensors.getDeviceCount();
   Serial.printf("DS18B20's initialized, %d found\n", deviceCount);
+
+  deviceAddressList = (DeviceAddress*) malloc(sizeof(DeviceAddress) * deviceCount);
+  for (int i = 0; i < deviceCount; i += 1) {
+    sensors.getAddress(deviceAddressList[i], i);
+  }
 }
 
 // function to print a device address
@@ -125,8 +131,7 @@ void loop() {
 
 
     for (int i = 0; i < deviceCount; i += 1) {
-      sensors.getAddress(address, i);
-      sprintAddress(buf, address);
+      sprintAddress(buf, deviceAddressList[i]);
       client.printf("temperature_c{sensor=\"%s\"} ", buf);
       client.print(sensors.getTempCByIndex(i));
       client.print("\n");
