@@ -126,7 +126,7 @@ void loop() {
 
     for (int i = 0; i < deviceCount; i += 1) {
       sprintAddress(buf, deviceAddressList[i]);
-      client.printf("temperature_c{sensor=\"%s\"} ", buf);
+      client.printf("temperature_c{address=\"%s\"} ", buf);
       client.print(sensors.getTempCByIndex(i));
       client.print("\n");
     }
@@ -145,7 +145,7 @@ void loop() {
 
     client.print("# HELP uptime_ms Uptime in milliseconds\n");
     client.print("# TYPE uptime_ms gauge\n");
-    client.printf("uptime_ms{} %d\n\n", millis());
+    client.printf("uptime_ms{} %lu\n\n", millis());
   } else {
     // Return the response
     client.println("HTTP/1.1 200 OK");
