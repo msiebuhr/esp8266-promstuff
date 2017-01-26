@@ -28,7 +28,6 @@ int deviceCount;
 // SKETCH BEGIN
 AsyncWebServer server(80);
 
-int requests = 0;
 char hostString[16] = {0};
 
 DeviceAddress address;
@@ -130,10 +129,6 @@ void setup() {
     response->print("# HELP wifi_rssi_dbm Received Signal Strength Indication, dBm\n");
     response->print("# TYPE wifi_rssi_dbm counter\n");
     response->printf("wifi_rssi_dbm{} %d\n\n", WiFi.RSSI());
-
-    response->print("# HELP http_requests_total Number of requests processed\n");
-    response->print("# TYPE http_requests_total counter\n");
-    response->printf("http_requests_total{} %d\n\n", requests);
 
     response->print("# HELP heap_free_b Uptime in milliseconds\n");
     response->print("# TYPE heap_free_b gauge\n");
