@@ -60,6 +60,9 @@ void setup() {
   Serial.println(" connected");
 
   // Start mDNS
+  if (!MDNS.begin(hostString)) {
+    Serial.println("Error setting up MDNS responder!");
+  }
   MDNS.addService("prometheus-http", "tcp", 80); // Announce esp tcp service on port 80
   MDNS.addService("http", "tcp", 80);
 
