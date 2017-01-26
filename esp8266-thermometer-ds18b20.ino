@@ -1,14 +1,18 @@
 
 #include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
+//#include <ESP8266mDNS.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+
+char buf[16];
 
 // Import board-specifics
 #include "LoLin-NodeMCU-board.h"
 
 // Things we don't want the outside world to see...
 #include "secrets.h"
+#include "devicemeta.h"
+
 
 // Setup a oneWire instance to communicate with any OneWire devices
 // (not just Maxim/Dallas temperature ICs)
@@ -22,7 +26,6 @@ int requests = 0;
 char hostString[16] = {0};
 
 DeviceAddress address;
-char buf[16];
 DeviceAddress* deviceAddressList;
 
 void setup() {
@@ -60,11 +63,13 @@ void setup() {
   Serial.println("/");
 
   // Start mDNS
-  if (!MDNS.begin(hostString)) {
+  /*
+    if (!MDNS.begin(hostString)) {
     Serial.println("Error setting up MDNS responder!");
-  }
-  MDNS.addService("prometheus-http", "tcp", 80); // Announce esp tcp service on port 80
-  Serial.println("mDNS responder started");
+    }
+    //MDNS.addService("prometheus-http", "tcp", 80); // Announce esp tcp service on port 80
+    Serial.println("mDNS responder started");
+  */
 
   // Start thermometers
   sensors.begin();
@@ -72,24 +77,19 @@ void setup() {
   Serial.printf("DS18B20's initialized, %d found\n", deviceCount);
 
   deviceAddressList = (DeviceAddress*) malloc(sizeof(DeviceAddress) * deviceCount);
+  //char* metadata = (char*) malloc(1024);
   for (int i = 0; i < deviceCount; i += 1) {
     sensors.getAddress(deviceAddressList[i], i);
+
+    // Get meta-data for sensors
+    //get_device_meta(metadata, 1024, deviceAddressList[i]);
+
+    //Serial.println(metadata);
   }
+  //free(metadata);
 }
 
-// function to print a device address
-void sprintAddress(char buf[], DeviceAddress deviceAddress)
-{
-  for (uint8_t i = 0; i < 8; i++)
-  {
-    // zero pad the address if necessary
-    if (deviceAddress[i] < 16) {
-      sprintf(buf + sizeof(char) * i * 2, "0%x", deviceAddress[i]);
-    } else {
-      sprintf(buf + sizeof(char) * i * 2, "%x", deviceAddress[i]);
-    }
-  }
-}
+
 
 void loop() {
   // Check if a client has connected
@@ -110,10 +110,41 @@ void loop() {
   // Read the first line of the request
   String request = client.readStringUntil('\r');
   Serial.println(request);
-  client.flush();
+  Serial.println(request.substring(0, 4));
+  //client.flush();
 
   // TODO: Match if the client wants metrics and reply with a bunch of those...
-  if (request.indexOf("/metrics") != -1) {
+  if (request.indexOf("/set-name") != -1 && request.substring(0, 4) == "POST") {
+    // Figure out POST /set-name/serial w. body DATA
+
+    // POST /foo/address/nick
+    // ^----^---^-------^
+    /*
+    int slashes[4] = {0, 0, 0, 0};
+    for (byte i = 1; i < 3; i += 1) {
+      slashes[i] = request.indexOf("/", slashes[i - 1] + 1);
+      Serial.println(slashes[i]);
+    }
+    */
+
+    client.println("HTTP/1.1 200 OK");
+    client.println();
+    // Find body
+    // TODO: Loop over data until we find two \r's without anything in between...
+    String body = "";
+    while (client.available() && body != "\n") {
+      body = client.readStringUntil('\r');
+      delay(1);
+      
+      if (body == "\n" || body.length() == 1) {
+        break;
+      }
+    }
+    body = client.readStringUntil('\r');
+    client.println(body);
+    client.flush();
+  }
+  else if (request.indexOf("/metrics") != -1) {
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/prometheus; version=0.4");
     client.println(""); //  do not forget this one
@@ -124,14 +155,24 @@ void loop() {
     client.print("# HELP temperature_c Calculated temperature in centigrade\n");
     client.print("# TYPE temperature_c gauge\n");
 
+    char * metadata = (char*)malloc(1024);
     for (int i = 0; i < deviceCount; i += 1) {
       sprintAddress(buf, deviceAddressList[i]);
-      client.printf("temperature_c{address=\"%s\"} ", buf);
+
+      // Get meta-data for sensors
+      if (get_device_meta(metadata + 1, 1023, deviceAddressList[i])) {
+        metadata[0] = 44; // ","
+      } else {
+        metadata[0] = 0;
+      }
+
+      client.printf("temperature_c{address=\"%s\"%s} ", buf, metadata);
       client.print(sensors.getTempCByIndex(i));
       client.print("\n");
     }
+    free(metadata);
 
-    client.print("# HELP wifi_rssi_dbm Number of requests processed\n");
+    client.print("# HELP wifi_rssi_dbm Received Signal Strength Indication, dBm\n");
     client.print("# TYPE wifi_rssi_dbm counter\n");
     client.printf("wifi_rssi_dbm{} %d\n\n", WiFi.RSSI());
 
