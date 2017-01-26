@@ -1,8 +1,12 @@
 
 #include <ESP8266WiFi.h>
-//#include <ESP8266mDNS.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
+#include <ESP8266mDNS.h>
+//#include <ArduinoOTA.h>
+#include <FS.h>
+#include <Hash.h>
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <SPIFFSEditor.h>
 
 char buf[16];
 
@@ -21,7 +25,9 @@ OneWire oneWire(D5);
 DallasTemperature sensors(&oneWire);
 int deviceCount;
 
-WiFiServer server(80);
+// SKETCH BEGIN
+AsyncWebServer server(80);
+
 int requests = 0;
 char hostString[16] = {0};
 
@@ -53,23 +59,9 @@ void setup() {
   }
   Serial.println(" connected");
 
-  // Start the server
-  server.begin();
-
-  // Print the IP address
-  Serial.print("Server started on: ");
-  Serial.print("http://");
-  Serial.print(WiFi.localIP());
-  Serial.println("/");
-
   // Start mDNS
-  /*
-    if (!MDNS.begin(hostString)) {
-    Serial.println("Error setting up MDNS responder!");
-    }
-    //MDNS.addService("prometheus-http", "tcp", 80); // Announce esp tcp service on port 80
-    Serial.println("mDNS responder started");
-  */
+  MDNS.addService("prometheus-http", "tcp", 80); // Announce esp tcp service on port 80
+  MDNS.addService("http", "tcp", 80);
 
   // Start thermometers
   sensors.begin();
@@ -87,73 +79,32 @@ void setup() {
     //Serial.println(metadata);
   }
   //free(metadata);
-}
 
+  SPIFFS.begin();
 
+  // Reachable on /edit
+  server.addHandler(new SPIFFSEditor("t", "t"));
 
-void loop() {
-  // Check if a client has connected
-  WiFiClient client = server.available();
-  if (!client) {
-    return;
-  }
+  server.onNotFound([](AsyncWebServerRequest * request) {
+    request->send(404);
+  });
 
-  // Wait until the client sends some data
-  while (!client.available()) {
-    delay(1);
-  }
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send(200, "text/html", "SERVER<hr><a href='/metrics'>/metrics</a>, <a href='/edit'>/edit</a>");
+  });
 
-  Serial.println("Client request");
-  digitalWrite(BUILTIN_LED, LOW);
-  requests = requests + 1;
+  server.on("/heap", HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send(200, "text/plain", String(ESP.getFreeHeap()));
+  });
 
-  // Read the first line of the request
-  String request = client.readStringUntil('\r');
-  Serial.println(request);
-  Serial.println(request.substring(0, 4));
-  //client.flush();
-
-  // TODO: Match if the client wants metrics and reply with a bunch of those...
-  if (request.indexOf("/set-name") != -1 && request.substring(0, 4) == "POST") {
-    // Figure out POST /set-name/serial w. body DATA
-
-    // POST /foo/address/nick
-    // ^----^---^-------^
-    /*
-    int slashes[4] = {0, 0, 0, 0};
-    for (byte i = 1; i < 3; i += 1) {
-      slashes[i] = request.indexOf("/", slashes[i - 1] + 1);
-      Serial.println(slashes[i]);
-    }
-    */
-
-    client.println("HTTP/1.1 200 OK");
-    client.println();
-    // Find body
-    // TODO: Loop over data until we find two \r's without anything in between...
-    String body = "";
-    while (client.available() && body != "\n") {
-      body = client.readStringUntil('\r');
-      delay(1);
-      
-      if (body == "\n" || body.length() == 1) {
-        break;
-      }
-    }
-    body = client.readStringUntil('\r');
-    client.println(body);
-    client.flush();
-  }
-  else if (request.indexOf("/metrics") != -1) {
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/prometheus; version=0.4");
-    client.println(""); //  do not forget this one
-
+  server.on("/metrics", HTTP_GET, [](AsyncWebServerRequest * request) {
+    digitalWrite(BUILTIN_LED, LOW);
+    AsyncResponseStream *response = request->beginResponseStream("text/prometheus; version=0.4");
     sensors.requestTemperatures(); // Send the command to get temperatures
     delay(1);
 
-    client.print("# HELP temperature_c Calculated temperature in centigrade\n");
-    client.print("# TYPE temperature_c gauge\n");
+    response->print("# HELP temperature_c Calculated temperature in centigrade\n");
+    response->print("# TYPE temperature_c gauge\n");
 
     char * metadata = (char*)malloc(1024);
     for (int i = 0; i < deviceCount; i += 1) {
@@ -166,39 +117,43 @@ void loop() {
         metadata[0] = 0;
       }
 
-      client.printf("temperature_c{address=\"%s\"%s} ", buf, metadata);
-      client.print(sensors.getTempCByIndex(i));
-      client.print("\n");
+      response->printf("temperature_c{address=\"%s\"%s} ", buf, metadata);
+      response->print(sensors.getTempCByIndex(i));
+      response->print("\n");
     }
     free(metadata);
+    response->print("\n");
 
-    client.print("# HELP wifi_rssi_dbm Received Signal Strength Indication, dBm\n");
-    client.print("# TYPE wifi_rssi_dbm counter\n");
-    client.printf("wifi_rssi_dbm{} %d\n\n", WiFi.RSSI());
+    response->print("# HELP wifi_rssi_dbm Received Signal Strength Indication, dBm\n");
+    response->print("# TYPE wifi_rssi_dbm counter\n");
+    response->printf("wifi_rssi_dbm{} %d\n\n", WiFi.RSSI());
 
-    client.print("# HELP http_requests_total Number of requests processed\n");
-    client.print("# TYPE http_requests_total counter\n");
-    client.printf("http_requests_total{} %d\n\n", requests);
+    response->print("# HELP http_requests_total Number of requests processed\n");
+    response->print("# TYPE http_requests_total counter\n");
+    response->printf("http_requests_total{} %d\n\n", requests);
 
-    client.print("# HELP heap_free_b Uptime in milliseconds\n");
-    client.print("# TYPE heap_free_b gauge\n");
-    client.printf("heap_free_b{} %d\n\n", ESP.getFreeHeap());
+    response->print("# HELP heap_free_b Uptime in milliseconds\n");
+    response->print("# TYPE heap_free_b gauge\n");
+    response->printf("heap_free_b{} %d\n\n", ESP.getFreeHeap());
 
-    client.print("# HELP uptime_ms Uptime in milliseconds\n");
-    client.print("# TYPE uptime_ms gauge\n");
-    client.printf("uptime_ms{} %lu\n\n", millis());
-  } else {
-    // Return the response
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/html");
-    client.println(""); //  do not forget this one
-    client.println("<!DOCTYPE HTML>");
-    client.println("<html><a href=\"/metrics\">/metrics</a></html>");
-  }
+    response->print("# HELP uptime_ms Uptime in milliseconds\n");
+    response->print("# TYPE uptime_ms gauge\n");
+    response->printf("uptime_ms{} %lu\n\n", millis());
 
-  digitalWrite(BUILTIN_LED, HIGH);
-  Serial.println("Client disonnected");
-  Serial.println("");
+    request->send(response);
 
+    digitalWrite(BUILTIN_LED, HIGH);
+  });
+
+  // Print the IP address
+  Serial.print("Server started on: ");
+  Serial.print("http://");
+  Serial.print(WiFi.localIP());
+  Serial.println("/");
+
+  // Start the server
+  server.begin();
 }
+
+void loop() {}
 

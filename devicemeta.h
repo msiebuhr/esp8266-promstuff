@@ -22,10 +22,8 @@ int get_device_meta(char buf[], int buflen, DeviceAddress device_address) {
   // Zero out buffer
   memset(buf, 0, buflen);
 
-  SPIFFS.begin();
   File f = SPIFFS.open(filename, "r");
   if (!f) {
-    SPIFFS.end();
     return 0;
   }
 
@@ -43,7 +41,6 @@ int get_device_meta(char buf[], int buflen, DeviceAddress device_address) {
     buf[len - 1] = 0;
   }
 
-  SPIFFS.end();
   return len - 1;
 }
 
@@ -52,10 +49,8 @@ bool set_device_meta(char buf[], int buf_len, char address[16]) {
   strcpy(filename + 1, address);
   strcpy(filename + 17, ".txt");
 
-  SPIFFS.begin();
   File f = SPIFFS.open(filename, "w");
   if (!f) {
-    SPIFFS.end();
     return false;
   }
 
@@ -64,7 +59,6 @@ bool set_device_meta(char buf[], int buf_len, char address[16]) {
   // Copy over data
   f.readBytes(buf, buf_len);
 
-  SPIFFS.end();
   return true;
 }
 
