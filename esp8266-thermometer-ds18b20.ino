@@ -120,9 +120,14 @@ void setup() {
         metadata[0] = 0;
       }
 
-      response->printf("temperature_c{address=\"%s\"%s} ", buf, metadata);
-      response->print(sensors.getTempCByIndex(i));
-      response->print("\n");
+      // Read temperature
+      float temperature = sensors.getTempCByIndex(i);
+
+      if (temperature != 85) { // 85 C is some kind of NO-OP data for DS18B20's
+        response->printf("temperature_c{address=\"%s\"%s} ", buf, metadata);
+        response->print(sensors.getTempCByIndex(i));
+        response->print("\n");
+      }
     }
     free(metadata);
     response->print("\n");
