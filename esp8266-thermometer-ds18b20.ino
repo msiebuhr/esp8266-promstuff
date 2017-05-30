@@ -74,6 +74,7 @@ void setup() {
   //char* metadata = (char*) malloc(1024);
   for (int i = 0; i < deviceCount; i += 1) {
     sensors.getAddress(deviceAddressList[i], i);
+    sensors.setResolution(deviceAddressList[i], 12);
 
     // Get meta-data for sensors
     //get_device_meta(metadata, 1024, deviceAddressList[i]);
