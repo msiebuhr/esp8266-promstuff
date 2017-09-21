@@ -2,10 +2,10 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 //#include <ArduinoOTA.h>
-#include <FS.h>
-#include <Hash.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <FS.h>
+#include <Hash.h>
 #include <SPIFFSEditor.h>
 
 char buf[16];
@@ -14,9 +14,8 @@ char buf[16];
 #include "LoLin-NodeMCU-board.h"
 
 // Things we don't want the outside world to see...
-#include "secrets.h"
 #include "devicemeta.h"
-
+#include "secrets.h"
 
 // Setup a oneWire instance to communicate with any OneWire devices
 // (not just Maxim/Dallas temperature ICs)
@@ -31,7 +30,7 @@ AsyncWebServer server(80);
 char hostString[16] = {0};
 
 DeviceAddress address;
-DeviceAddress* deviceAddressList;
+DeviceAddress *deviceAddressList;
 
 void setup() {
   Serial.begin(115200);
@@ -70,7 +69,7 @@ void setup() {
   deviceCount = sensors.getDeviceCount();
   Serial.printf("DS18B20's initialized, %d found\n", deviceCount);
 
-  deviceAddressList = (DeviceAddress*) malloc(sizeof(DeviceAddress) * deviceCount);
+  deviceAddressList = (DeviceAddress *)malloc(sizeof(DeviceAddress) * deviceCount);
   //char* metadata = (char*) malloc(1024);
   for (int i = 0; i < deviceCount; i += 1) {
     sensors.getAddress(deviceAddressList[i], i);
@@ -88,19 +87,19 @@ void setup() {
   // Reachable on /edit
   server.addHandler(new SPIFFSEditor("t", "t"));
 
-  server.onNotFound([](AsyncWebServerRequest * request) {
+  server.onNotFound([](AsyncWebServerRequest *request) {
     request->send(404);
   });
 
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/html", "SERVER<hr><a href='/metrics'>/metrics</a>, <a href='/edit'>/edit</a>");
   });
 
-  server.on("/heap", HTTP_GET, [](AsyncWebServerRequest * request) {
+  server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", String(ESP.getFreeHeap()));
   });
 
-  server.on("/metrics", HTTP_GET, [](AsyncWebServerRequest * request) {
+  server.on("/metrics", HTTP_GET, [](AsyncWebServerRequest *request) {
     digitalWrite(BUILTIN_LED, LOW);
     AsyncResponseStream *response = request->beginResponseStream("text/prometheus; version=0.4");
     sensors.requestTemperatures(); // Send the command to get temperatures
@@ -109,7 +108,7 @@ void setup() {
     response->print("# HELP temperature_c Calculated temperature in centigrade\n");
     response->print("# TYPE temperature_c gauge\n");
 
-    char * metadata = (char*)malloc(1024);
+    char *metadata = (char *)malloc(1024);
     for (int i = 0; i < deviceCount; i += 1) {
       sprintAddress(buf, deviceAddressList[i]);
 
@@ -160,4 +159,3 @@ void setup() {
 }
 
 void loop() {}
-

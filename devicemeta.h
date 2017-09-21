@@ -1,6 +1,6 @@
-#include <OneWire.h>
 #include <DallasTemperature.h>
 #include <FS.h>
+#include <OneWire.h>
 
 // function to print a device address
 void sprintAddress(char buf[], DeviceAddress deviceAddress) {
@@ -16,7 +16,7 @@ void sprintAddress(char buf[], DeviceAddress deviceAddress) {
 
 int get_device_meta(char buf[], int buflen, DeviceAddress device_address) {
   char filename[] = "/DEADBEEFDEADBEEF.txt";
-  sprintAddress(filename + 1, device_address); \
+  sprintAddress(filename + 1, device_address);
   strcpy(filename + 17, ".txt");
 
   // Zero out buffer
@@ -54,7 +54,7 @@ bool set_device_meta(char buf[], int buf_len, char address[16]) {
     return false;
   }
 
-  f.write((uint8_t*) buf, buf_len);
+  f.write((uint8_t *)buf, buf_len);
 
   // Copy over data
   f.readBytes(buf, buf_len);
