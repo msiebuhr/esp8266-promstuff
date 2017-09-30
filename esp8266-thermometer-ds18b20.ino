@@ -90,10 +90,6 @@ IAS.begin(true);
     request->send(200, "text/html", "SERVER<hr><a href='/metrics'>/metrics</a>, <a href='/edit'>/edit</a>, <a href='/call-home'>/call-home</a>");
   });
 
-  server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", String(ESP.getFreeHeap()));
-  });
-
   server.on("/call-home", HTTP_GET, [](AsyncWebServerRequest *request) {
     IAS.callHome(false); // true = request SPIFFS
     request->send(200, "text/plain", "OK");
