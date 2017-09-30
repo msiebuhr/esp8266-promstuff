@@ -9,7 +9,7 @@
 #include <IOTAppStory.h>
 
 #define APPNAME "prom_ds18b20_sensor"
-#define VERSION "V1.0.1"
+#define VERSION "V1.0.2"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3
 IOTAppStory IAS(APPNAME,VERSION,COMPDATE,MODEBUTTON);
@@ -87,11 +87,16 @@ IAS.begin(true);
   });
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/html", "SERVER<hr><a href='/metrics'>/metrics</a>, <a href='/edit'>/edit</a>");
+    request->send(200, "text/html", "SERVER<hr><a href='/metrics'>/metrics</a>, <a href='/edit'>/edit</a>, <a href='/call-home'>/call-home</a>");
   });
 
   server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", String(ESP.getFreeHeap()));
+  });
+
+  server.on("/call-home", HTTP_GET, [](AsyncWebServerRequest *request) {
+    IAS.callHome(false); // true = request SPIFFS
+    request->send(200, "text/plain", "OK");
   });
 
   server.on("/metrics", HTTP_GET, [](AsyncWebServerRequest *request) {
