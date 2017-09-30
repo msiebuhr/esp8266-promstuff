@@ -19,9 +19,7 @@ char buf[16];
 // Import board-specifics
 //#include "LoLin-NodeMCU-board.h"
 
-// Things we don't want the outside world to see...
 #include "devicemeta.h"
-#include "secrets.h"
 
 // Setup a oneWire instance to communicate with any OneWire devices
 // (not just Maxim/Dallas temperature ICs)
@@ -37,6 +35,8 @@ char hostString[16] = {0};
 
 DeviceAddress address;
 DeviceAddress *deviceAddressList;
+
+bool doUpdateOnNextLoop = false;
 
 void setup() {
   IAS.serialdebug(true,115200);
@@ -91,7 +91,7 @@ IAS.begin(true);
   });
 
   server.on("/call-home", HTTP_GET, [](AsyncWebServerRequest *request) {
-    IAS.callHome(false); // true = request SPIFFS
+    doUpdateOnNextLoop = true; // Set flag, as IAS aparently doesn't work from async requests
     request->send(200, "text/plain", "OK");
   });
 
@@ -155,5 +155,9 @@ IAS.begin(true);
 }
 
 void loop() {
-IAS.buttonLoop();
+  IAS.buttonLoop();
+  if (doUpdateOnNextLoop == true) {
+    IAS.callHome(false); // true = request SPIFFS
+    doUpdateOnNextLoop = false;
+  }
 }
