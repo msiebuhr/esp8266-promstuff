@@ -1,5 +1,4 @@
 
-#include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 //#include <ArduinoOTA.h>
 #include <ESPAsyncTCP.h>
@@ -7,11 +6,18 @@
 #include <FS.h>
 #include <Hash.h>
 #include <SPIFFSEditor.h>
+#include <IOTAppStory.h>
+
+#define APPNAME "prom_ds18b20_sensor"
+#define VERSION "V1.0.1"
+#define COMPDATE __DATE__ __TIME__
+#define MODEBUTTON D3
+IOTAppStory IAS(APPNAME,VERSION,COMPDATE,MODEBUTTON);
 
 char buf[16];
 
 // Import board-specifics
-#include "LoLin-NodeMCU-board.h"
+//#include "LoLin-NodeMCU-board.h"
 
 // Things we don't want the outside world to see...
 #include "devicemeta.h"
@@ -33,8 +39,10 @@ DeviceAddress address;
 DeviceAddress *deviceAddressList;
 
 void setup() {
-  Serial.begin(115200);
-  delay(10);
+  IAS.serialdebug(true,115200);
+
+//IAS.preSetConfig("webtoggle");  
+IAS.begin(true); 
 
   sprintf(hostString, "ESP_%06X", ESP.getChipId());
   Serial.print("Hostname: ");
@@ -43,19 +51,6 @@ void setup() {
 
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, LOW);
-
-  // Connect to WiFi network
-  Serial.println();
-  Serial.printf("Connecting to %s ", SECRET_WIFI_SSID);
-
-  WiFi.mode(WIFI_STA); // STA = STand-Alone? Doesn't start an AP on the side, which is nice.
-  WiFi.begin(SECRET_WIFI_SSID, SECRET_WIFI_PASSWORD);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println(" connected");
 
   // Start mDNS
   if (!MDNS.begin(hostString)) {
@@ -158,4 +153,6 @@ void setup() {
   server.begin();
 }
 
-void loop() {}
+void loop() {
+IAS.buttonLoop();
+}
