@@ -12,7 +12,7 @@
 #define VERSION "V1.0.3"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3
-IOTAppStory IAS(APPNAME,VERSION,COMPDATE,MODEBUTTON);
+IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
 
 char buf[16];
 
@@ -39,10 +39,10 @@ DeviceAddress *deviceAddressList;
 bool doUpdateOnNextLoop = false;
 
 void setup() {
-  IAS.serialdebug(true,115200);
+  IAS.serialdebug(true, 115200);
 
-//IAS.preSetConfig("webtoggle");  
-IAS.begin(true); 
+  //IAS.preSetConfig("webtoggle");
+  IAS.begin(true);
 
   sprintf(hostString, "ESP_%06X", ESP.getChipId());
   Serial.print("Hostname: ");
@@ -82,20 +82,20 @@ IAS.begin(true);
   // Reachable on /edit
   server.addHandler(new SPIFFSEditor("t", "t"));
 
-  server.onNotFound([](AsyncWebServerRequest *request) {
+  server.onNotFound([](AsyncWebServerRequest * request) {
     request->send(404);
   });
 
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/html", "SERVER<hr><a href='/metrics'>/metrics</a>, <a href='/edit'>/edit</a>, <a href='/call-home'>/call-home</a>");
   });
 
-  server.on("/call-home", HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/call-home", HTTP_GET, [](AsyncWebServerRequest * request) {
     doUpdateOnNextLoop = true; // Set flag, as IAS aparently doesn't work from async requests
     request->send(200, "text/plain", "OK");
   });
 
-  server.on("/metrics", HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/metrics", HTTP_GET, [](AsyncWebServerRequest * request) {
     digitalWrite(BUILTIN_LED, LOW);
     AsyncResponseStream *response = request->beginResponseStream("text/prometheus; version=0.4");
     sensors.requestTemperatures(); // Send the command to get temperatures
