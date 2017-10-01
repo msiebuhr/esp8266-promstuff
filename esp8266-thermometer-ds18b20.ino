@@ -36,7 +36,7 @@ char hostString[16] = {0};
 DeviceAddress address;
 DeviceAddress *deviceAddressList;
 
-bool doUpdateOnNextLoop = false;
+unsigned long lastCallHome = millis();
 
 void setup() {
   IAS.serialdebug(true, 115200);
@@ -91,7 +91,7 @@ void setup() {
   });
 
   server.on("/call-home", HTTP_GET, [](AsyncWebServerRequest * request) {
-    doUpdateOnNextLoop = true; // Set flag, as IAS aparently doesn't work from async requests
+    lastCallHome = 0; // Set flag, as IAS aparently doesn't work from async requests
     request->send(200, "text/plain", "OK");
   });
 
@@ -156,8 +156,8 @@ void setup() {
 
 void loop() {
   IAS.buttonLoop();
-  if (doUpdateOnNextLoop == true) {
+  if ((millis() - lastCallHome) > (2 * 60 * 60 * 1000)) {
     IAS.callHome(false); // true = request SPIFFS
-    doUpdateOnNextLoop = false;
+    lastCallHome = millis();
   }
 }
