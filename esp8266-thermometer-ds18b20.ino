@@ -9,7 +9,7 @@
 #include <SPIFFSEditor.h>
 
 #define APPNAME "prom_ds18b20_sensor"
-#define VERSION "V1.0.4"
+#define VERSION "V1.0.5"
 #define COMPDATE __DATE__ __TIME__
 #define MODEBUTTON D3
 IOTAppStory IAS(APPNAME, VERSION, COMPDATE, MODEBUTTON);
