@@ -5,8 +5,8 @@
 #include <ESPAsyncWebServer.h>
 #include <FS.h>
 #include <Hash.h>
-#include <SPIFFSEditor.h>
 #include <IOTAppStory.h>
+#include <SPIFFSEditor.h>
 
 #define APPNAME "prom_ds18b20_sensor"
 #define VERSION "V1.0.4"
