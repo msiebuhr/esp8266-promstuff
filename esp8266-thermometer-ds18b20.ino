@@ -30,7 +30,6 @@ int deviceCount;
 // SKETCH BEGIN
 AsyncWebServer server(80);
 
-char hostString[16] = {0};
 
 DeviceAddress address;
 DeviceAddress *deviceAddressList;
@@ -40,22 +39,17 @@ unsigned long lastCallHome = millis();
 void setup() {
   IAS.serialdebug(true, 115200);
 
-  //IAS.preSetConfig("webtoggle");
-  IAS.begin(true);
 
+  char hostString[16] = {0};
   sprintf(hostString, "ESP_%06X", ESP.getChipId());
-  Serial.print("Hostname: ");
-  Serial.println(hostString);
-  WiFi.hostname(hostString);
+  IAS.preSetConfig(hostString, false);
+  IAS.begin(true);
 
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, LOW);
 
-  // Start mDNS
-  if (!MDNS.begin(hostString)) {
-    Serial.println("Error setting up MDNS responder!");
-  }
-  MDNS.addService("prometheus-http", "tcp", 80); // Announce esp tcp service on port 80
+  // Add a few MDNS names (IAS starts MDNS for us!)
+  MDNS.addService("prometheus-http", "tcp", 80);
   MDNS.addService("http", "tcp", 80);
 
   // Start thermometers
@@ -146,12 +140,6 @@ void setup() {
 
     digitalWrite(BUILTIN_LED, HIGH);
   });
-
-  // Print the IP address
-  Serial.print("Server started on: ");
-  Serial.print("http://");
-  Serial.print(WiFi.localIP());
-  Serial.println("/");
 
   // Start the server
   server.begin();
