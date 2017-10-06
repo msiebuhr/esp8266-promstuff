@@ -134,7 +134,7 @@ void setup() {
 
     response->print("# HELP ias_build_info A metric with a constant '1' value labeled by sketch_md5 and version.\n");
     response->print("# TYPE ias_build_info gauge\n");
-    response->printf("ias_build_info{appname=\"%s\",sketch_md5=\"%s\",version=\"%s\"} 1", APPNAME, ESP.getSketchMD5().c_str(), VERSION);
+    response->printf("ias_build_info{appname=\"%s\",sketch_md5=\"%s\",version=\"%s\"} 1\n", APPNAME, ESP.getSketchMD5().c_str(), VERSION);
 
     request->send(response);
 
