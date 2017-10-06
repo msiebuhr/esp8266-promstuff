@@ -146,7 +146,7 @@ void setup() {
 }
 
 void loop() {
-  //IAS.buttonLoop();
+  IAS.buttonLoop();
   if ((millis() - lastCallHome) > (2 * 60 * 60 * 1000)) {
     IAS.callHome(false); // true = request SPIFFS
     lastCallHome = millis();
