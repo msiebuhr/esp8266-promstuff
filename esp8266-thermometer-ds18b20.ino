@@ -34,7 +34,7 @@ AsyncWebServer server(80);
 DeviceAddress address;
 DeviceAddress *deviceAddressList;
 
-unsigned long lastCallHome = millis();
+uint32_t lastCallHome = 1;
 
 void setup() {
   IAS.serialdebug(true, 115200);
@@ -147,7 +147,7 @@ void setup() {
 
 void loop() {
   IAS.buttonLoop();
-  if ((millis() - lastCallHome) > (2 * 60 * 60 * 1000)) {
+  if ((millis() - lastCallHome) > (2 * 60 * 60 * 1000) || (lastCallHome == 0)) {
     IAS.callHome(false); // true = request SPIFFS
     lastCallHome = millis();
   }
