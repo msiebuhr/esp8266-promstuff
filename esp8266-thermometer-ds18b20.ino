@@ -39,7 +39,6 @@ uint32_t lastCallHome = 1;
 void setup() {
   IAS.serialdebug(true, 115200);
 
-
   char hostString[16] = {0};
   sprintf(hostString, "ESP_%06X", ESP.getChipId());
   IAS.preSetConfig(hostString, false);
@@ -124,13 +123,13 @@ void setup() {
     response->print("# TYPE wifi_rssi_dbm counter\n");
     response->printf("wifi_rssi_dbm{} %d\n\n", WiFi.RSSI());
 
-    response->print("# HELP heap_free_b Uptime in milliseconds\n");
-    response->print("# TYPE heap_free_b gauge\n");
-    response->printf("heap_free_b{} %d\n\n", ESP.getFreeHeap());
+    response->print("# HELP heap_free_bytes Free heap in bytes\n");
+    response->print("# TYPE heap_free_bytes gauge\n");
+    response->printf("heap_free_bytes{} %d\n\n", ESP.getFreeHeap());
 
-    response->print("# HELP uptime_ms Uptime in milliseconds\n");
-    response->print("# TYPE uptime_ms gauge\n");
-    response->printf("uptime_ms{} %lu\n\n", millis());
+    response->print("# HELP uptime_seconds Uptime in seconds\n");
+    response->print("# TYPE uptime_seconds gauge\n");
+    response->printf("uptime_seconds{} %f\n\n", ((double)millis())/1000.0);
 
     response->print("# HELP ias_build_info A metric with a constant '1' value labeled by sketch_md5 and version.\n");
     response->print("# TYPE ias_build_info gauge\n");
